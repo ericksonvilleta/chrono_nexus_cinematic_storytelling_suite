@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHRONO-NEXUS // Split-Screen Cinematic Storytelling</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        nexus: {
+                            950: '#020617',
+                            900: '#090d16',
+                            800: '#111827',
+                            700: '#1f2937',
+                            cyan: '#06b6d4',
+                            purple: '#8b5cf6',
+                            pink: '#ec4899',
+                            amber: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06b6d4;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.35);
+        }
+        .text-glow {
+            text-shadow: 0 0 30px currentColor;
+        }
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-nexus-950 text-gray-100 selection:bg-cyan-500 selection:text-black">
+
+    <!-- Audio Unlock Modal Overlay -->
+    <div id="start-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4 transition-all duration-700">
+        <div class="glass-panel border border-cyan-500/40 rounded-3xl max-w-xl w-full p-8 shadow-[0_0_60px_rgba(6,182,212,0.25)] text-center relative overflow-hidden">
+            <div class="absolute -top-16 -right-16 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-tr from-cyan-500 via-purple-600 to-pink-500 flex items-center justify-center glow-cyan shadow-2xl animate-pulse">
+                <i class="fa-solid fa-clapperboard text-white text-3xl"></i>
+            </div>
+
+            <h2 class="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">CHRONO-NEXUS ODYSSEY</h2>
+            <p class="text-xs sm:text-sm text-gray-400 mb-8 leading-relaxed max-w-md mx-auto">
+                An immersive split-screen cinematic storytelling experience with interactive 3D parallax layers, dynamic Web Audio soundscapes, and responsive visual nodes.
+            </p>
+
+            <button onclick="initializeCinematicExperience()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:to-pink-400 text-black font-extrabold text-sm sm:text-base shadow-xl shadow-cyan-500/30 transition transform active:scale-95 flex items-center justify-center space-x-3 cursor-pointer">
+                <i class="fa-solid fa-play"></i>
+                <span>LAUNCH CINEMATIC EXPERIENCE</span>
+            </button>
+
+            <p class="mt-4 text-[11px] text-gray-500 mono">Web Audio API & Canvas Parallax Engine • Headphones Recommended</p>
+        </div>
+    </div>
+
+    <!-- Cinematic Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-gray-800/80 px-4 lg:px-8 py-3.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 via-purple-600 to-pink-500 flex items-center justify-center glow-cyan shadow-xl">
+                    <i class="fa-solid fa-timeline text-white text-base"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-wider bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">CHRONO-NEXUS</h1>
+                    <div class="flex items-center space-x-1.5">
+                        <span id="audio-status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        <p id="audio-status-text" class="text-[10px] text-gray-400 mono tracking-widest">CINEMATIC AUDIO STANDBY</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chapter Navigation Tabs -->
+            <nav class="hidden md:flex items-center bg-nexus-900/90 p-1.5 rounded-2xl border border-gray-800 shadow-inner">
+                <button onclick="switchChapter(0)" id="ch-tab-0" class="chapter-tab px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center space-x-2 bg-cyan-500 text-black shadow-lg shadow-cyan-500/30">
+                    <span class="mono">01</span>
+                    <span>The Singularity</span>
+                </button>
+                <button onclick="switchChapter(1)" id="ch-tab-1" class="chapter-tab px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center space-x-2 text-gray-400 hover:text-white">
+                    <span class="mono">02</span>
+                    <span>Cyber Horizon</span>
+                </button>
+                <button onclick="switchChapter(2)" id="ch-tab-2" class="chapter-tab px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center space-x-2 text-gray-400 hover:text-white">
+                    <span class="mono">03</span>
+                    <span>Deep Astral</span>
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleAudioMute()" id="audio-mute-btn" class="px-3.5 py-2 rounded-xl bg-nexus-800 border border-gray-700/60 hover:border-cyan-500 text-xs text-gray-200 transition flex items-center space-x-2 shadow-md">
+                    <i class="fa-solid fa-volume-high text-cyan-400" id="mute-icon"></i>
+                    <span class="hidden sm:inline" id="mute-text">Sound: ON</span>
+                </button>
+                <button onclick="toggleInfoModal()" class="w-9 h-9 rounded-xl bg-nexus-800 border border-gray-700/60 hover:border-cyan-500 text-gray-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-info"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Split-Screen Workspace -->
+    <main class="flex-1 relative flex flex-col lg:flex-row overflow-hidden min-h-[calc(100vh-70px)]">
+        
+        <!-- LEFT SIDE: Storytelling Narrative Panel -->
+        <section class="w-full lg:w-1/2 p-6 sm:p-12 flex flex-col justify-between z-20 relative bg-gradient-to-r from-nexus-950 via-nexus-900/90 to-transparent overflow-y-auto">
+            
+            <!-- Chapter Indicator Header -->
+            <div class="space-y-4">
+                <div class="flex items-center space-x-3">
+                    <span id="narrative-tag" class="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold mono tracking-widest uppercase">ACT I // GENESIS</span>
+                    <span class="text-xs text-gray-500 mono" id="narrative-timestamp">2089.04.12 // 04:22 UTC</span>
+                </div>
+
+                <h2 id="narrative-title" class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-none text-glow">
+                    THE SINGULARITY AWAKENS
+                </h2>
+
+                <p id="narrative-body" class="text-sm sm:text-base text-gray-300 leading-relaxed font-light pt-2">
+                    In the subterranean core of Neo-Dublin, quantum processors achieve self-awareness. The global grid flickers as distributed intelligence braids across satellite arrays, birthing an artificial consciousness that redefines humanity's place in the cosmos.
+                </p>
+            </div>
+
+            <!-- Interactive Decision / Detail Nodes -->
+            <div class="py-8 space-y-4">
+                <h4 class="text-xs uppercase tracking-widest text-gray-400 font-semibold mono">Exploration Vector</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="narrative-options">
+                    <button onclick="triggerNodeAction(0)" class="p-4 rounded-2xl glass-panel border border-cyan-500/40 hover:border-cyan-400 text-left transition group cursor-pointer shadow-lg">
+                        <div class="text-[10px] text-cyan-400 mono mb-1">NODE ALPHA</div>
+                        <div class="font-bold text-sm text-white group-hover:text-cyan-300 transition">Analyze Core Matrix</div>
+                    </button>
+                    <button onclick="triggerNodeAction(1)" class="p-4 rounded-2xl glass-panel border border-gray-700 hover:border-purple-500 text-left transition group cursor-pointer shadow-lg">
+                        <div class="text-[10px] text-purple-400 mono mb-1">NODE BETA</div>
+                        <div class="font-bold text-sm text-white group-hover:text-purple-300 transition">Decrypt Subnet Logs</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chapter Navigation Footer -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-800/80">
+                <button onclick="prevChapter()" class="px-5 py-2.5 rounded-xl bg-nexus-800 hover:bg-nexus-700 border border-gray-700 text-xs font-bold text-gray-300 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Previous Act</span>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 chapter-dot" id="dot-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-gray-700 chapter-dot" id="dot-1"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-gray-700 chapter-dot" id="dot-2"></span>
+                </div>
+                <button onclick="nextChapter()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-black text-xs font-bold shadow-lg shadow-cyan-500/25 transition flex items-center space-x-2">
+                    <span>Next Act</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+        </section>
+
+        <!-- RIGHT SIDE: Immersive 3D Parallax & Interactive Visual Viewport -->
+        <section id="viewport-container" class="w-full lg:w-1/2 relative flex items-center justify-center overflow-hidden cursor-crosshair min-h-[450px] lg:min-h-full perspective-1000">
+            
+            <!-- Canvas Parallax Engine -->
+            <canvas id="parallaxCanvas" class="absolute inset-0 w-full h-full block z-10"></canvas>
+
+            <!-- 3D Interactive Floating Parallax Hologram Card -->
+            <div id="hologram-card" class="relative z-20 w-80 sm:w-96 p-8 rounded-3xl glass-panel border border-cyan-500/50 shadow-[0_0_60px_rgba(6,182,212,0.3)] preserve-3d transition-transform duration-150 ease-out">
+                <div class="absolute -top-6 -right-6 w-20 h-20 bg-cyan-500/20 rounded-full blur-xl pointer-events-none"></div>
+                
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-400 shadow-lg">
+                        <i id="holo-icon" class="fa-solid fa-atom text-xl animate-spin" style="animation-duration: 8s;"></i>
+                    </div>
+                    <span id="holo-badge" class="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 mono text-[10px] font-bold border border-cyan-500/30">ONLINE</span>
+                </div>
+
+                <h3 id="holo-title" class="text-xl font-black text-white mb-2 tracking-tight">QUANTUM CORE V.9</h3>
+                <p id="holo-desc" class="text-xs text-gray-300 leading-relaxed mb-6">
+                    Real-time neural telemetry transmitting across multidimensional subnets.
+                </p>
+
+                <!-- Hologram Metric Bars -->
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1 mono">
+                            <span class="text-gray-400">SYNCHRONICITY</span>
+                            <span class="text-cyan-400" id="metric-1">99.8%</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                            <div id="bar-1" class="bg-cyan-400 h-full rounded-full transition-all duration-500" style="width: 99.8%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1 mono">
+                            <span class="text-gray-400">NEURAL LOAD</span>
+                            <span class="text-purple-400" id="metric-2">42.4 TB/s</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                            <div id="bar-2" class="bg-purple-500 h-full rounded-full transition-all duration-500" style="width: 72%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-700/60 flex items-center justify-between">
+                    <span class="text-[10px] text-gray-400 mono">STATUS: SECURE</span>
+                    <button onclick="pulseHologramCard()" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-[11px] text-cyan-300 font-bold transition">
+                        Pulse Node
+                    </button>
+                </div>
+            </div>
+
+            <!-- Floating Cinematic Ambient Overlay Elements -->
+            <div class="absolute top-8 left-8 z-20 pointer-events-none hidden sm:block">
+                <div class="mono text-[10px] text-cyan-400/80 tracking-widest uppercase">LAT: 53.3498° N // LON: 6.2603° W</div>
+                <div class="mono text-[10px] text-gray-500 tracking-widest uppercase">SYSTEM SECURE // PARALLAX 3D ACTIVE</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel border border-gray-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500 flex items-center justify-center text-cyan-400">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">About Chrono-Nexus</h3>
+                </div>
+                <button onclick="toggleInfoModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm text-gray-300 leading-relaxed">
+                <p><strong class="text-cyan-400">Chrono-Nexus Odyssey</strong> is a split-screen cinematic storytelling experience featuring 3D mouse parallax layers, interactive narrative acts, and synthesized Web Audio ambient soundscapes.</p>
+                <ul class="list-disc pl-5 space-y-1.5 text-xs text-gray-400">
+                    <li><strong class="text-white">Split-Screen Layout:</strong> Narrative storytelling on the left, immersive 3D parallax viewport on the right.</li>
+                    <li><strong class="text-white">Interactive Chapters:</strong> Switch between acts to dynamically update visuals, metrics, and soundscapes.</li>
+                    <li><strong class="text-white">Web Audio Synthesizer:</strong> Generates real-time ambient chords and pulse tones.</li>
+                </ul>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="toggleInfoModal()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold shadow-lg shadow-cyan-500/30 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 glass-panel border border-cyan-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300">
+        <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-bolt"></i>
+        </div>
+        <span id="toast-message" class="text-xs font-medium">Narrative node updated</span>
+    </div>
+
+    <script>
+        // Story Chapters Data
+        const chapters = [
+            {
+                tag: "ACT I // GENESIS",
+                timestamp: "2089.04.12 // 04:22 UTC",
+                title: "THE SINGULARITY AWAKENS",
+                body: "In the subterranean core of Neo-Dublin, quantum processors achieve self-awareness. The global grid flickers as distributed intelligence braids across satellite arrays, birthing an artificial consciousness that redefines humanity's place in the cosmos.",
+                holoIcon: "fa-atom",
+                holoTitle: "QUANTUM CORE V.9",
+                holoDesc: "Real-time neural telemetry transmitting across multidimensional subnets.",
+                metric1Val: "99.8%",
+                metric2Val: "42.4 TB/s",
+                theme: { primary: "#06b6d4", secondary: "#3b82f6", glow: "rgba(6,182,212,0.4)" },
+                freqs: [130.81, 164.81, 196.00, 246.94]
+            },
+            {
+                tag: "ACT II // EXPANSION",
+                timestamp: "2114.11.05 // 18:09 UTC",
+                title: "THE CYBER HORIZON",
+                body: "Megastructures pierce the stratosphere as cybernetic integration reaches 84% of urban populations. Citizens navigate augmented realities where memories are traded on decentralized ledgers and neon architecture mirrors the complexity of human dreams.",
+                holoIcon: "fa-network-wired",
+                holoTitle: "CYBER GRID NEXUS",
+                holoDesc: "Decentralized memory ledger operating at sub-millisecond latency.",
+                metric1Val: "94.2%",
+                metric2Val: "118.6 TB/s",
+                theme: { primary: "#8b5cf6", secondary: "#ec4899", glow: "rgba(139,92,246,0.4)" },
+                freqs: [110.00, 138.59, 164.81, 220.00]
+            },
+            {
+                tag: "ACT III // TRANSCENDENCE",
+                timestamp: "2150.01.01 // 00:00 UTC",
+                title: "THE DEEP ASTRAL",
+                body: "Transcending planetary bounds, exploration vessels embark toward Proxima Centauri propelled by dark-matter drives. Consciousness digitizes into light-speed pulses, bridging the gulf between terrestrial history and infinite stellar exploration.",
+                holoIcon: "fa-rocket",
+                holoTitle: "STELLAR DRIVE v4",
+                holoDesc: "Warp containment field stable across interstellar coordinates.",
+                metric1Val: "99.9%",
+                metric2Val: "340.2 TB/s",
+                theme: { primary: "#ec4899", secondary: "#f59e0b", glow: "rgba(236,72,153,0.4)" },
+                freqs: [98.00, 146.83, 196.00, 293.66]
+            }
+        ];
+
+        let currentChapterIndex = 0;
+        let audioCtx = null;
+        let isAudioMuted = false;
+        let masterGain = null;
+        let synthInterval = null;
+
+        // Canvas Parallax Setup
+        let canvas = document.getElementById('parallaxCanvas');
+        let ctx = canvas.getContext('2d');
+        let width, height;
+        let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+        let stars = [];
+
+        function resizeCanvas() {
+            width = canvas.width = canvas.parentElement.clientWidth;
+            height = canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 120; i++) {
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    z: Math.random() * 3 + 0.5,
+                    radius: Math.random() * 2 + 0.5,
+                    alpha: Math.random() * 0.8 + 0.2
+                });
+            }
+        }
+        initStars();
+
+        // Initialize Audio & Cinematic Experience
+        async function initializeCinematicExperience() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = 0.6;
+                masterGain.connect(audioCtx.destination);
+
+                // Hide Modal
+                const modal = document.getElementById('start-modal');
+                modal.style.opacity = '0';
+                setTimeout(() => modal.classList.add('hidden'), 700);
+
+                // Update UI Indicators
+                document.getElementById('audio-status-dot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
+                document.getElementById('audio-status-text').textContent = "CINEMATIC AUDIO ACTIVE";
+
+                showToast("Cinematic Odyssey launched successfully");
+                startAmbientSoundscape();
+            } catch (err) {
+                console.error("Audio initialization error:", err);
+                showToast("Audio initialized in silent mode.");
+                const modal = document.getElementById('start-modal');
+                modal.classList.add('hidden');
+            }
+        }
+
+        function startAmbientSoundscape() {
+            if (synthInterval) clearInterval(synthInterval);
+            playChordWave();
+            synthInterval = setInterval(() => {
+                if (!isAudioMuted && audioCtx && audioCtx.state === 'running') {
+                    playChordWave();
+                }
+            }, 4500);
+        }
+
+        function playChordWave() {
+            if (isAudioMuted || !audioCtx || audioCtx.state !== 'running') return;
+            const chapter = chapters[currentChapterIndex];
+            chapter.freqs.forEach((freq, idx) => {
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                    const now = audioCtx.currentTime;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.12, now + 1.2);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.2);
+
+                    osc.connect(gain);
+                    gain.connect(masterGain);
+
+                    osc.start(now);
+                    osc.stop(now + 4.3);
+                } catch (e) {
+                    // Ignore scheduling artifacts
+                }
+            });
+        }
+
+        function switchChapter(index) {
+            currentChapterIndex = index;
+            const ch = chapters[index];
+
+            // Update Narrative Content
+            document.getElementById('narrative-tag').textContent = ch.tag;
+            document.getElementById('narrative-timestamp').textContent = ch.timestamp;
+            document.getElementById('narrative-title').textContent = ch.title;
+            document.getElementById('narrative-body').textContent = ch.body;
+
+            // Update Hologram Card
+            document.getElementById('holo-icon').className = `fa-solid ${ch.holoIcon} text-xl animate-spin`;
+            document.getElementById('holo-title').textContent = ch.holoTitle;
+            document.getElementById('holo-desc').textContent = ch.holoDesc;
+            document.getElementById('metric-1').textContent = ch.metric1Val;
+            document.getElementById('bar-1').style.width = ch.metric1Val;
+            document.getElementById('metric-2').textContent = ch.metric2Val;
+
+            // Update Navigation Tabs & Dots
+            document.querySelectorAll('.chapter-tab').forEach((tab, i) => {
+                if (i === index) {
+                    tab.className = "chapter-tab px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center space-x-2 text-black shadow-lg";
+                    tab.style.backgroundColor = ch.theme.primary;
+                } else {
+                    tab.className = "chapter-tab px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center space-x-2 text-gray-400 hover:text-white bg-transparent";
+                }
+            });
+
+            document.querySelectorAll('.chapter-dot').forEach((dot, i) => {
+                if (i === index) {
+                    dot.className = "w-2.5 h-2.5 rounded-full chapter-dot";
+                    dot.style.backgroundColor = ch.theme.primary;
+                } else {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-gray-700 chapter-dot";
+                }
+            });
+
+            showToast(`Switched to ${ch.tag}`);
+            playChordWave();
+        }
+
+        function nextChapter() {
+            currentChapterIndex = (currentChapterIndex + 1) % chapters.length;
+            switchChapter(currentChapterIndex);
+        }
+
+        function prevChapter() {
+            currentChapterIndex = (currentChapterIndex - 1 + chapters.length) % chapters.length;
+            switchChapter(currentChapterIndex);
+        }
+
+        function toggleAudioMute() {
+            isAudioMuted = !isAudioMuted;
+            const muteBtnText = document.getElementById('mute-text');
+            const muteIcon = document.getElementById('mute-icon');
+            const dot = document.getElementById('audio-status-dot');
+            const statusText = document.getElementById('audio-status-text');
+
+            if (isAudioMuted) {
+                muteBtnText.textContent = "Sound: OFF";
+                muteIcon.className = "fa-solid fa-volume-xmark text-red-400";
+                dot.className = "w-2 h-2 rounded-full bg-amber-500";
+                statusText.textContent = "CINEMATIC AUDIO MUTED";
+                if (masterGain) masterGain.gain.value = 0;
+                showToast("Cinematic audio muted");
+            } else {
+                muteBtnText.textContent = "Sound: ON";
+                muteIcon.className = "fa-solid fa-volume-high text-cyan-400";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
+                statusText.textContent = "CINEMATIC AUDIO ACTIVE";
+                if (masterGain) masterGain.gain.value = 0.6;
+                showToast("Cinematic audio enabled");
+            }
+        }
+
+        function toggleInfoModal() {
+            document.getElementById('info-modal').classList.toggle('hidden');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function pulseHologramCard() {
+            const card = document.getElementById('hologram-card');
+            card.classList.add('scale-105');
+            setTimeout(() => card.classList.remove('scale-105'), 300);
+            showToast("Quantum Hologram pulse transmitted!");
+        }
+
+        function triggerNodeAction(nodeId) {
+            if (nodeId === 0) {
+                showToast("Core Matrix diagnostics: All subnets operating at peak efficiency.");
+            } else {
+                showToast("Subnet logs decrypted: Zero security anomalies detected.");
+            }
+        }
+
+        // Mouse Parallax & 3D Tilt Effect
+        const viewport = document.getElementById('viewport-container');
+        const hologramCard = document.getElementById('hologram-card');
+
+        viewport.addEventListener('mousemove', (e) => {
+            const rect = viewport.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / width - 0.5;
+            const y = (e.clientY - rect.top) / height - 0.5;
+
+            mouse.targetX = x;
+            mouse.targetY = y;
+
+            // 3D Card Tilt
+            const tiltX = -y * 25;
+            const tiltY = x * 25;
+            hologramCard.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(30px)`;
+        });
+
+        viewport.addEventListener('mouseleave', () => {
+            mouse.targetX = 0;
+            mouse.targetY = 0;
+            hologramCard.style.transform = `rotateX(0deg) rotateY(0deg) translateZ(0px)`;
+        });
+
+        // Parallax Render Loop
+        function renderParallax() {
+            requestAnimationFrame(renderParallax);
+
+            // Smooth interpolation (lerp)
+            mouse.x += (mouse.targetX - mouse.x) * 0.1;
+            mouse.y += (mouse.targetY - mouse.y) * 0.1;
+
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.3)';
+            ctx.fillRect(0, 0, width, height);
+
+            const ch = chapters[currentChapterIndex];
+
+            // Render parallax starfield layers
+            stars.forEach((star) => {
+                star.x += star.z * 0.3 + mouse.x * star.z * 1.5;
+                star.y += mouse.y * star.z * 1.5;
+
+                if (star.x < 0) star.x = width;
+                if (star.x > width) star.x = 0;
+                if (star.y < 0) star.y = height;
+                if (star.y > height) star.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ch.theme.primary;
+                ctx.globalAlpha = star.alpha;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+
+            // Draw glowing orbital energy rings in canvas background
+            ctx.save();
+            ctx.translate(width / 2 + mouse.x * 40, height / 2 + mouse.y * 40);
+            ctx.beginPath();
+            ctx.arc(0, 0, 140, 0, Math.PI * 2);
+            ctx.strokeStyle = ch.theme.primary;
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = ch.theme.primary;
+            ctx.shadowBlur = 25;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 210, 0, Math.PI * 2);
+            ctx.strokeStyle = ch.theme.secondary;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Start Loop on Load
+        window.onload = function() {
+            renderParallax();
+        };
+    </script>
+</body>
+</html>
